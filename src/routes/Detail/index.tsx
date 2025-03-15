@@ -32,4 +32,13 @@ const StyledWrapper = styled.div`
   pre[class*="language-mermaid"] {
     background-color: ${({ theme }) => theme.colors.gray5};
   }
+
+  .notion {
+    line-height: 1.7;
+    font-size: 16.5px;
+  }
+
+  .notion-h {
+    width: 100%;
+  }
 `
