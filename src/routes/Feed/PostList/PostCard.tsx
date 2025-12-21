@@ -22,20 +22,13 @@ const PostCard: React.FC<Props> = ({ data }) => {
             <Category>{category}</Category>
           </div>
         )}
-        {data.thumbnail && (
-          <div className="thumbnail">
-            <Image
-              src={data.thumbnail}
-              fill
-              alt={data.title}
-              css={{ objectFit: "cover" }}
-            />
-          </div>
-        )}
-        <div data-thumb={!!data.thumbnail} data-category={!!category} className="content">
+        <div data-category={!!category} className="content">
           <header className="top">
             <h2>{data.title}</h2>
           </header>
+          <div className="summary">
+            <p>{data.summary}</p>
+          </div>
           <div className="date">
             <div className="content">
               {formatDate(
@@ -43,15 +36,6 @@ const PostCard: React.FC<Props> = ({ data }) => {
                 CONFIG.lang
               )}
             </div>
-          </div>
-          <div className="summary">
-            <p>{data.summary}</p>
-          </div>
-          <div className="tags">
-            {data.tags &&
-              data.tags.map((tag: string, idx: number) => (
-                <Tag key={idx}>{tag}</Tag>
-              ))}
           </div>
         </div>
       </article>
@@ -81,32 +65,23 @@ const StyledWrapper = styled(Link)`
       box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
         0 4px 6px -2px rgba(0, 0, 0, 0.05);
     }
+
     > .category {
       position: absolute;
-      top: 1rem;
-      left: 1rem;
+      top: 1.5rem;
+      left: 1.5rem;
       z-index: 10;
     }
 
-    > .thumbnail {
-      position: relative;
-      width: 100%;
-      background-color: ${({ theme }) => theme.colors.gray2};
-      padding-bottom: 66%;
-
-      @media (min-width: 1024px) {
-        padding-bottom: 50%;
-      }
-    }
     > .content {
-      padding: 1rem;
+      padding: 1.5rem;
 
-      &[data-thumb="false"] {
-        padding-top: 3.5rem;
-      }
+      padding-top: 4rem;
+
       &[data-category="false"] {
         padding-top: 1.5rem;
       }
+
       > .top {
         display: flex;
         flex-direction: column;
@@ -116,8 +91,8 @@ const StyledWrapper = styled(Link)`
           flex-direction: row;
           align-items: baseline;
         }
+
         h2 {
-          margin-bottom: 0.5rem;
           font-size: 1.125rem;
           line-height: 1.75rem;
           font-weight: 500;
@@ -130,11 +105,12 @@ const StyledWrapper = styled(Link)`
           }
         }
       }
+
       > .date {
         display: flex;
-        margin-bottom: 1rem;
         gap: 0.5rem;
         align-items: center;
+
         .content {
           font-size: 0.875rem;
           line-height: 1.25rem;
@@ -144,6 +120,7 @@ const StyledWrapper = styled(Link)`
           }
         }
       }
+
       > .summary {
         margin-bottom: 1rem;
         p {

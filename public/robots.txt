@@ -1,0 +1,9 @@
+# *
+User-agent: *
+Allow: /
+
+# Host
+Host: https://devhanyoung-log.vercel.app
+
+# Sitemaps
+Sitemap: https://devhanyoung-log.vercel.app/sitemap.xml

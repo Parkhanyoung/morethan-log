@@ -1,24 +1,13 @@
-import { useState } from "react"
-
-import SearchInput from "./SearchInput"
-import { FeedHeader } from "./FeedHeader"
 import Footer from "./Footer"
 import styled from "@emotion/styled"
 import TagList from "./TagList"
-import MobileProfileCard from "./MobileProfileCard"
-import ProfileCard from "./ProfileCard"
-import ServiceCard from "./ServiceCard"
 import ContactCard from "./ContactCard"
 import PostList from "./PostList"
-import PinnedPosts from "./PostList/PinnedPosts"
+import { useRestoreScroll } from "./hooks/useRestoreScroll"
 
 const HEADER_HEIGHT = 73
 
-type Props = {}
-
-const Feed: React.FC<Props> = () => {
-  const [q, setQ] = useState("")
-
+const Feed: React.FC = () => {
   return (
     <StyledWrapper>
       <div
@@ -30,14 +19,10 @@ const Feed: React.FC<Props> = () => {
         <TagList />
       </div>
       <div className="mid">
-        <MobileProfileCard />
-        <PinnedPosts q={q} />
-        <SearchInput value={q} onChange={(e) => setQ(e.target.value)} />
         <div className="tags">
           <TagList />
         </div>
-        <FeedHeader />
-        <PostList q={q} />
+        <PostList />
         <div className="footer">
           <Footer />
         </div>
@@ -48,12 +33,7 @@ const Feed: React.FC<Props> = () => {
           height: `calc(100vh - ${HEADER_HEIGHT}px)`,
         }}
       >
-        <ProfileCard />
-        <ServiceCard />
         <ContactCard />
-        <div className="footer">
-          <Footer />
-        </div>
       </div>
     </StyledWrapper>
   )
@@ -64,7 +44,6 @@ export default Feed
 const StyledWrapper = styled.div`
   grid-template-columns: repeat(12, minmax(0, 1fr));
 
-  padding: 2rem 0;
   display: grid;
   gap: 1.5rem;
 
@@ -76,7 +55,6 @@ const StyledWrapper = styled.div`
   > .lt {
     display: none;
     overflow: scroll;
-    position: sticky;
     grid-column: span 2 / span 2;
     top: ${HEADER_HEIGHT - 10}px;
 
@@ -123,7 +101,6 @@ const StyledWrapper = styled.div`
 
     display: none;
     overflow: scroll;
-    position: sticky;
     top: ${HEADER_HEIGHT - 10}px;
 
     @media (min-width: 1024px) {
