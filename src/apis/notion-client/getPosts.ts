@@ -1,4 +1,5 @@
 import { CONFIG } from "site.config"
+import { PHASE_PRODUCTION_BUILD } from "next/constants"
 import { idToUuid } from "notion-utils"
 
 import getAllPageIds from "src/libs/utils/notion/getAllPageIds"
@@ -14,12 +15,16 @@ import { TPosts } from "src/types"
 // TODO: react query를 사용해서 처음 불러온 뒤로는 해당데이터만 사용하도록 수정
 const POSTS_CACHE_TTL_MS = 5_000
 
+let buildCachedPostsPromise: Promise<TPosts> | undefined
+
 let cachedPosts:
   | {
       expiresAt: number
       promise: Promise<TPosts>
     }
   | undefined
+
+const isBuildPhase = () => process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD
 
 const fetchPosts = async () => {
   let id = CONFIG.notionConfig.pageId as string
@@ -68,6 +73,22 @@ const fetchPosts = async () => {
 }
 
 export const getPosts = async () => {
+  if (isBuildPhase()) {
+    if (buildCachedPostsPromise) {
+      return buildCachedPostsPromise
+    }
+
+    const promise = fetchPosts().catch((error) => {
+      if (buildCachedPostsPromise === promise) {
+        buildCachedPostsPromise = undefined
+      }
+      throw error
+    })
+
+    buildCachedPostsPromise = promise
+    return promise
+  }
+
   const now = Date.now()
   if (cachedPosts && cachedPosts.expiresAt > now) {
     return cachedPosts.promise
