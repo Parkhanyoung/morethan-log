@@ -1,14 +1,14 @@
 import { getTextContent, getDateValue } from "notion-utils"
-import { NotionAPI } from "notion-client"
 import { BlockMap, CollectionPropertySchemaMap } from "notion-types"
 import { customMapImageUrl } from "./customMapImageUrl"
+import { unwrapRecordValue } from "./normalizeRecordMap"
+import { getNotionUsers } from "src/apis/notion-client/notionApi"
 
 async function getPageProperties(
   id: string,
   block: BlockMap,
   schema: CollectionPropertySchemaMap
 ) {
-  const api = new NotionAPI()
   const rawProperties = Object.entries(block?.[id]?.value?.properties || [])
   const excludeProperties = ["date", "select", "multi_select", "person", "file"]
   const properties: any = {}
@@ -26,7 +26,7 @@ async function getPageProperties(
             const newurl = customMapImageUrl(url, Block)
             properties[schema[key].name] = newurl
           } catch (error) {
-            properties[schema[key].name] = undefined
+            // Skip invalid file metadata so build-time serialization stays JSON-safe.
           }
           break
         }
@@ -57,15 +57,19 @@ async function getPageProperties(
           for (let i = 0; i < rawUsers.length; i++) {
             if (rawUsers[i][0][1]) {
               const userId = rawUsers[i][0]
-              const res: any = await api.getUsers(userId)
-              const resValue =
-                res?.recordMapWithRoles?.notion_user?.[userId[1]]?.value
+              const res: any = await getNotionUsers(userId)
+              const resValue: any = unwrapRecordValue(
+                res?.recordMapWithRoles?.notion_user?.[userId[1]]
+              )
+              const name =
+                resValue?.name ||
+                [resValue?.family_name, resValue?.given_name]
+                  .filter(Boolean)
+                  .join("") ||
+                null
               const user = {
-                id: resValue?.id,
-                name:
-                  resValue?.name ||
-                  `${resValue?.family_name}${resValue?.given_name}` ||
-                  undefined,
+                id: resValue?.id || null,
+                name,
                 profile_photo: resValue?.profile_photo || null,
               }
               users.push(user)

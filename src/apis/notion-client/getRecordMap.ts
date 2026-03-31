@@ -1,7 +1,7 @@
-import { NotionAPI } from "notion-client"
+import { getNotionPage } from "./notionApi"
+import { normalizeRecordMap } from "src/libs/utils/notion/normalizeRecordMap"
 
 export const getRecordMap = async (pageId: string) => {
-  const api = new NotionAPI()
-  const recordMap = await api.getPage(pageId)
+  const recordMap = normalizeRecordMap(await getNotionPage(pageId) as any)
   return recordMap
 }

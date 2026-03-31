@@ -1,9 +1,11 @@
 import { CONFIG } from "site.config"
-import { NotionAPI } from "notion-client"
+import { PHASE_PRODUCTION_BUILD } from "next/constants"
 import { idToUuid } from "notion-utils"
 
 import getAllPageIds from "src/libs/utils/notion/getAllPageIds"
 import getPageProperties from "src/libs/utils/notion/getPageProperties"
+import { normalizeRecordMap } from "src/libs/utils/notion/normalizeRecordMap"
+import { getNotionPage } from "./notionApi"
 import { TPosts } from "src/types"
 
 /**
@@ -11,14 +13,26 @@ import { TPosts } from "src/types"
  */
 
 // TODO: react query를 사용해서 처음 불러온 뒤로는 해당데이터만 사용하도록 수정
-export const getPosts = async () => {
-  let id = CONFIG.notionConfig.pageId as string
-  const api = new NotionAPI()
+const POSTS_CACHE_TTL_MS = 5_000
 
-  const response = await api.getPage(id)
+let buildCachedPostsPromise: Promise<TPosts> | undefined
+
+let cachedPosts:
+  | {
+      expiresAt: number
+      promise: Promise<TPosts>
+    }
+  | undefined
+
+const isBuildPhase = () => process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD
+
+const fetchPosts = async () => {
+  let id = CONFIG.notionConfig.pageId as string
+
+  const response: any = normalizeRecordMap(await getNotionPage(id) as any)
   id = idToUuid(id)
-  const collection = Object.values(response.collection)[0]?.value
-  const block = response.block
+  const collection = (Object.values(response.collection as any)[0] as any)?.value
+  const block = response.block as any
   const schema = collection?.schema
 
   const rawMetadata = block[id].value
@@ -56,4 +70,41 @@ export const getPosts = async () => {
     const posts = data as TPosts
     return posts
   }
+}
+
+export const getPosts = async () => {
+  if (isBuildPhase()) {
+    if (buildCachedPostsPromise) {
+      return buildCachedPostsPromise
+    }
+
+    const promise = fetchPosts().catch((error) => {
+      if (buildCachedPostsPromise === promise) {
+        buildCachedPostsPromise = undefined
+      }
+      throw error
+    })
+
+    buildCachedPostsPromise = promise
+    return promise
+  }
+
+  const now = Date.now()
+  if (cachedPosts && cachedPosts.expiresAt > now) {
+    return cachedPosts.promise
+  }
+
+  const promise = fetchPosts().catch((error) => {
+    if (cachedPosts?.promise === promise) {
+      cachedPosts = undefined
+    }
+    throw error
+  })
+
+  cachedPosts = {
+    expiresAt: now + POSTS_CACHE_TTL_MS,
+    promise,
+  }
+
+  return promise
 }
