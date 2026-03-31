@@ -2,6 +2,7 @@ import { getTextContent, getDateValue } from "notion-utils"
 import { NotionAPI } from "notion-client"
 import { BlockMap, CollectionPropertySchemaMap } from "notion-types"
 import { customMapImageUrl } from "./customMapImageUrl"
+import { unwrapRecordValue } from "./normalizeRecordMap"
 
 async function getPageProperties(
   id: string,
@@ -58,8 +59,9 @@ async function getPageProperties(
             if (rawUsers[i][0][1]) {
               const userId = rawUsers[i][0]
               const res: any = await api.getUsers(userId)
-              const resValue =
-                res?.recordMapWithRoles?.notion_user?.[userId[1]]?.value
+              const resValue: any = unwrapRecordValue(
+                res?.recordMapWithRoles?.notion_user?.[userId[1]]
+              )
               const user = {
                 id: resValue?.id,
                 name:
